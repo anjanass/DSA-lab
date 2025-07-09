@@ -1,120 +1,114 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Node structure
 struct Node {
     int data;
-    struct Node* left;
-    struct Node* right;
+    struct Node *left, *right;
 };
 
-// Create a new node
-struct Node* createNode(int value) {
-    struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
-    newNode->data = value;
-    newNode->left = newNode->right = NULL;
-    return newNode;
+struct Node* createNode(int val) {
+    struct Node* node = (struct Node*)malloc(sizeof(struct Node));
+    node->data = val;
+    node->left = node->right = NULL;
+    return node;
 }
 
-// Insert into Binary Search Tree
-struct Node* insert(struct Node* root, int value) {
-    if (root == NULL)
-        return createNode(value);
-
-    if (value < root->data)
-        root->left = insert(root->left, value);
-    else if (value > root->data)
-        root->right = insert(root->right, value);
-    
+struct Node* insert(struct Node* root, int val) {
+    if (!root) return createNode(val);
+    if (val < root->data) root->left = insert(root->left, val);
+    else if (val > root->data) root->right = insert(root->right, val);
     return root;
 }
 
-// Inorder Traversal
 void inorder(struct Node* root) {
-    if (root == NULL) return;
+    if (!root) return;
     inorder(root->left);
     printf("%d ", root->data);
     inorder(root->right);
 }
 
-// Preorder Traversal
 void preorder(struct Node* root) {
-    if (root == NULL) return;
+    if (!root) return;
     printf("%d ", root->data);
     preorder(root->left);
     preorder(root->right);
 }
 
-// Postorder Traversal
 void postorder(struct Node* root) {
-    if (root == NULL) return;
+    if (!root) return;
     postorder(root->left);
     postorder(root->right);
     printf("%d ", root->data);
 }
 
-// Count total nodes
-int countNodes(struct Node* root) {
-    if (root == NULL) return 0;
-    return 1 + countNodes(root->left) + countNodes(root->right);
-}
-
-// Compute height of the tree
-int treeHeight(struct Node* root) {
-    if (root == NULL) return 0;
-    int leftHeight = treeHeight(root->left);
-    int rightHeight = treeHeight(root->right);
-    return 1 + (leftHeight > rightHeight ? leftHeight : rightHeight);
-}
-
-// Visual display of tree structure
 void printTree(struct Node* root, int space) {
-    if (root == NULL) return;
-
-    // Increase distance between levels
+    if (!root) return;
     space += 5;
-
-    // Print right subtree first (top side)
     printTree(root->right, space);
-
-    // Print current node after space count
-    printf("\n");
-    for (int i = 5; i < space; i++)
-        printf(" ");
-    printf("%d\n", root->data);
-
-    // Print left subtree (bottom side)
+    printf("\n%*s%d\n", space, "", root->data);
     printTree(root->left, space);
 }
 
-// Main program
+struct Node* findMin(struct Node* root) {
+    while (root && root->left) root = root->left;
+    return root;
+}
+
+struct Node* deleteNode(struct Node* root, int val) {
+    if (!root) return NULL;
+    if (val < root->data) root->left = deleteNode(root->left, val);
+    else if (val > root->data) root->right = deleteNode(root->right, val);
+    else {
+        if (!root->left) { struct Node* t = root->right; free(root); return t; }
+        if (!root->right) { struct Node* t = root->left; free(root); return t; }
+        struct Node* t = findMin(root->right);
+        root->data = t->data;
+        root->right = deleteNode(root->right, t->data);
+    }
+    return root;
+}
+
 int main() {
     struct Node* root = NULL;
-    int n, value;
+    int n, val;
 
-    printf("Enter number of nodes to insert: ");
+    printf("Enter number of nodes: ");
     scanf("%d", &n);
-
     printf("Enter %d values:\n", n);
-    for (int i = 0; i < n; i++) {
-        scanf("%d", &value);
-        root = insert(root, value);
+    while (n--) {
+        scanf("%d", &val);
+        root = insert(root, val);
     }
 
-    printf("\nTree structure (sideways view):\n");
+    printf("\nTree:\n");
     printTree(root, 0);
 
-    printf("\nInorder traversal: ");
-    inorder(root);
+    printf("\nInorder: "); inorder(root);
+    printf("\nPreorder: "); preorder(root);
+    printf("\nPostorder: "); postorder(root);
 
-    printf("\nPreorder traversal: ");
-    preorder(root);
-
-    printf("\nPostorder traversal: ");
-    postorder(root);
-
-    printf("\nTotal number of nodes: %d", countNodes(root));
-    printf("\nHeight of the tree: %d\n", treeHeight(root));
+    int choice;
+    do {
+        printf("\n\nDelete a node? (1=Yes, 0=No): ");
+        scanf("%d", &choice);
+        if (choice) {
+            printf("Enter value to delete: ");
+            scanf("%d", &val);
+            struct Node* t = root;
+            while (t) {
+                if (val == t->data) break;
+                t = val < t->data ? t->left : t->right;
+            }
+            if (!t) printf("Value not found!\n");
+            else {
+                root = deleteNode(root, val);
+                printf("Deleted %d.\n", val);
+                printf("\nTree after deletion:\n");
+                printTree(root, 0);
+                printf("\nInorder: "); inorder(root);
+            }
+        }
+    } while (choice);
 
     return 0;
 }
